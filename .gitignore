@@ -6,8 +6,6 @@ __pycache__/
 data/
 *.pdf
 
-# separate git clone of the CS336 starter repo; has its own history
-assignment1-basics/
 
 # scratch
 test.py
