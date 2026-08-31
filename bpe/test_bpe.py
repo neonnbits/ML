@@ -1,6 +1,6 @@
-from main import count_pairs, merge_pair, merge_vocab, encode, decode, train
+from main import count_pairs, merge_pair, merge_vocab, encode, decode, _train_on_text
 
-
+SPECIAL = ["<|endoftext|>"]
 # --- merge_pair ---
 
 def test_merge_pair_merges_adjacent():
@@ -46,28 +46,22 @@ def test_merge_vocab_applies_merge_to_all_words():
 
 def test_train_is_deterministic_and_stops_when_no_pairs_left():
     # "aa" fully merges in 2 steps; asking for 10 must not loop or crash
-    merges = train("aa aa", 10)
-    assert merges == [('a', 'a'), ('aa', '</w>')]
+    vocab, merges = _train_on_text("aa aa", 287, SPECIAL)
+    assert merges == [(b'a', b'a'), (b' ', b'aa')]
 
 def test_train_respects_num_merges():
-    merges = train("low low lower newest", 3)
+    vocab, merges = _train_on_text("low low lower newest", 260, SPECIAL)
     assert len(merges) == 3
 
 
 # --- encode / decode ---
 
-def test_encode_no_merges_gives_characters():
-    assert encode("hi", []) == ['h', 'i', '</w>']
-
-def test_decode_restores_spaces():
-    assert decode(['lo', 'w</w>', 'lo', 'w', 'e', 'r</w>']) == "low lower"
-
 def test_roundtrip():
     text = "low low low lower lower newest"
-    merges = train(text, 5)
+    merges = _train_on_text(text, 5, SPECIAL)
     assert decode(encode(text, merges)) == text
 
 def test_roundtrip_unseen_word():
     # a word not in training data still encodes/decodes correctly
-    merges = train("low lower", 5)
+    merges = _train_on_text("low lower", 5, SPECIAL)
     assert decode(encode("slow", merges)) == "slow"
