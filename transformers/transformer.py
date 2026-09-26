@@ -1,5 +1,4 @@
 import numpy as np
-
 """
 matrix of embedding vectors of a token sequence (n, d) 
 where n is the total number of tokens and d is the embedding vector dimension
@@ -40,7 +39,8 @@ def self_attention(X, W_q, W_k, W_v):
 
     d_k = K.shape[-1]
 
-    attn_scores = (Q @ K.swapaxes(-1,-2)) / np.sqrt(d_k)
+    attn_scores = (np.einsum('...ij,...kj->...ik', Q, K)) / np.sqrt(d_k)
+    # attn_scores = (Q @ K.swapaxes(-1,-2)) / np.sqrt(d_k)
     attn_weights = softmax(attn_scores)
 
     out = attn_weights @ V
