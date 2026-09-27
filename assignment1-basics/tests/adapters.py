@@ -11,6 +11,9 @@ from torch import Tensor
 
 from cs336_basics.bpe import train
 from cs336_basics.linear import Linear
+from cs336_basics.embedding import Embedding
+from cs336_basics.rmsnorm import RMSNorm
+from cs336_basics.ffn import FFN
 
 def run_linear(
     d_in: int,
@@ -54,7 +57,9 @@ def run_embedding(
         Float[Tensor, "... d_model"]: Batch of embeddings returned by your Embedding layer.
     """
 
-    raise NotImplementedError
+    layer = Embedding(vocab_size, d_model)
+    layer.load_state_dict({'weight': weights})
+    return layer(token_ids)
 
 
 def run_swiglu(
@@ -86,8 +91,10 @@ def run_swiglu(
     # swiglu.w1.weight.data = w1_weight
     # swiglu.w2.weight.data = w2_weight
     # swiglu.w3.weight.data = w3_weight
-    raise NotImplementedError
-
+    ffn = FFN(d_model, d_ff)
+    ffn.load_state_dict({"w1.weight": w1_weight, "w2.weight": w2_weight, "w3.weight": w3_weight})
+    out = ffn(in_features)
+    return out
 
 def run_scaled_dot_product_attention(
     Q: Float[Tensor, " ... queries d_k"],
@@ -381,8 +388,11 @@ def run_rmsnorm(
         Float[Tensor,"... d_model"]: Tensor of with the same shape as `in_features` with the output of running
         RMSNorm of the `in_features`.
     """
-    raise NotImplementedError
+    layer = RMSNorm(d_model, eps=eps)
+    layer.load_state_dict({'weight': weights})
+    return layer(in_features)
 
+from cs336_basics.ffn import silu
 
 def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
     """Given a tensor of inputs, return the output of applying SiLU
@@ -395,8 +405,7 @@ def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
         Float[Tensor,"..."]: of with the same shape as `in_features` with the output of applying
         SiLU to each element.
     """
-    raise NotImplementedError
-
+    return silu(in_features)
 
 def run_get_batch(
     dataset: npt.NDArray, batch_size: int, context_length: int, device: str
