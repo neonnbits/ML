@@ -14,6 +14,10 @@ from cs336_basics.linear import Linear
 from cs336_basics.embedding import Embedding
 from cs336_basics.rmsnorm import RMSNorm
 from cs336_basics.ffn import FFN
+from cs336_basics.softmax import torch_softmax
+from cs336_basics.attention import sdpa
+from cs336_basics.attention import MHA
+from cs336_basics.rope import RotaryPositionalEmbedding
 
 def run_linear(
     d_in: int,
@@ -114,7 +118,7 @@ def run_scaled_dot_product_attention(
     Returns:
         Float[Tensor, " ... queries d_v"]: Output of SDPA
     """
-    raise NotImplementedError
+    return sdpa(Q,K,V,mask)
 
 
 def run_multihead_self_attention(
@@ -148,7 +152,10 @@ def run_multihead_self_attention(
         Float[Tensor, " ... sequence_length d_model"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
+    mha = MHA(d_model, num_heads)
+    mha.load_state_dict({"q_proj.weight": q_proj_weight, "k_proj.weight": k_proj_weight, "v_proj.weight":v_proj_weight, "output_proj.weight": o_proj_weight})
+    out = mha(in_features)
+    return out
 
 
 def run_multihead_self_attention_with_rope(
@@ -188,8 +195,10 @@ def run_multihead_self_attention_with_rope(
         Float[Tensor, " ... sequence_length d_model"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    raise NotImplementedError
-
+    mha = MHA(d_model, num_heads, theta, max_seq_len)
+    mha.load_state_dict({"q_proj.weight": q_proj_weight, "k_proj.weight": k_proj_weight, "v_proj.weight":v_proj_weight, "output_proj.weight": o_proj_weight})
+    out = mha(in_features, token_positions)
+    return out
 
 def run_rope(
     d_k: int,
@@ -210,7 +219,9 @@ def run_rope(
     Returns:
         Float[Tensor, " ... sequence_length d_k"]: Tensor with RoPEd input.
     """
-    raise NotImplementedError
+    rope = RotaryPositionalEmbedding(theta, d_k, max_seq_len)
+    M = rope(in_query_or_key, token_positions)
+    return M
 
 
 def run_transformer_block(
@@ -430,6 +441,7 @@ def run_get_batch(
     raise NotImplementedError
 
 
+
 def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, " ..."]:
     """
     Given a tensor of inputs, return the output of softmaxing the given `dim`
@@ -443,7 +455,7 @@ def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, "
         Float[Tensor, "..."]: Tensor of with the same shape as `in_features` with the output of
         softmax normalizing the specified `dim`.
     """
-    raise NotImplementedError
+    return torch_softmax(in_features, dim=dim)
 
 
 def run_cross_entropy(
